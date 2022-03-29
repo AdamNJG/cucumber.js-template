@@ -1,0 +1,5 @@
+{
+    "app" : "npx ts-node infrastructure/cdkLaunch.ts",
+    "requireApproval": "never",
+    "watch": "services"
+}
