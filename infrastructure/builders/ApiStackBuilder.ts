@@ -1,13 +1,13 @@
 import { Stack, StackProps, CfnOutput, aws_dynamodb} from 'aws-cdk-lib';
-import { Construct } from 'constructs';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'
 import { RestApi, ResourceBase, LambdaIntegration } from 'aws-cdk-lib/aws-apigateway';
 import { Table } from 'aws-cdk-lib/aws-dynamodb';
+import { App } from 'aws-cdk-lib';
 
 export class ApiStackBuilder extends Stack {
     public readonly hcEndpoint: CfnOutput;
 
-    constructor(scope: Construct,id: string, apiTypes: string[], props?: StackProps){
+    constructor(scope: App,id: string, apiTypes: string[], props?: StackProps){
         super(scope, id + "Stack", props);
 
         const gateway = new RestApi(this, `${id}API`);

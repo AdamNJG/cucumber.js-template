@@ -1,53 +1,51 @@
 import { binding, given, then, when} from 'cucumber-tsflow';
-import { SettingDto } from "../../Models/SettingDto";
-import { SettingsDto } from "../../Models/SettingsDto";
+import { SettingDto } from "../../../Models/SettingDto";
+import { SettingsDto } from "../../../Models/SettingsDto";
 import { Guid } from "guid-typescript";
-import { handler as PostHandler } from '../../lambdaCode/Settings/POSTSettings';
-import { ApiEventPayload } from '../../Models/ApiEventPayload';
-import { HttpMethods } from '../../infrastructure/builders/HttpMethods';
-import { setSDKInstance, mock, restore }from 'aws-sdk-mock';
-//import  AWS from 'aws-sdk';
-const AWS = require('aws-sdk');
+import { post, post as PostHandler } from '../../../lambdaCode/Settings/POSTSettings';
+import { ApiEventPayload } from '../../../Models/ApiEventPayload';
+import { HttpMethods } from '../../../infrastructure/builders/HttpMethods';
+import * as AWSMock from 'aws-sdk-mock';
+import * as AWS from 'aws-sdk';
+import { DocumentClient, UpdateItemInput } from 'aws-sdk/clients/dynamodb';
 
-@binding()
-export class ApiStackSteps {
+const assert = require('assert');
+const { Given, When, Then } = require('@cucumber/cucumber');
 
-    
+AWSMock.setSDKInstance(AWS);
+let mockDynamoDB: DocumentClient;
+let result: any;
 
-    settings : SettingsDto;
-    eventPayload: ApiEventPayload;
+AWSMock.mock(
+  'DynamoDB.DocumentClient',
+  'put',
+  (params: UpdateItemInput, callback: Function) => {
+      callback(null, "Put Item into DynamoDB");
+  },
+);
+
+mockDynamoDB = new AWS.DynamoDB.DocumentClient({
+    apiVersion: '2012-08-10',
+  });
+
+let settings : SettingsDto;
+let eventPayload: ApiEventPayload;
 
 
-
-    @given(/an event payload with a settings object as the body/)
-    public eventContainingSettingsObject() {
+    Given('an event payload with a settings object as the body', function () {
         let settingList : SettingDto[] = [];
         settingList.push(new SettingDto("setting 1", "true"));
         settingList.push(new SettingDto("setting 2", "true"));
         settingList.push(new SettingDto("setting 3", "true"));
-        this.settings = new SettingsDto(Guid.create(), settingList);
-        this.eventPayload = new ApiEventPayload(HttpMethods.POST, "Settings", this.settings);
-    }
+        settings = new SettingsDto(Guid.create(), settingList);
+        eventPayload = new ApiEventPayload(HttpMethods.POST, "Settings", settings);
+    });
 
-    @when(/the settings object is passed to the lambda/)
-    public async runLambdaWithSettingsObject() {
-        setSDKInstance(AWS);
-        mock('DynamoDB', 'getItem', (params: {}, callback: Function) => {
-            PostHandler(this.eventPayload)
-        })
-    
-        const input:any = { TableName: '', Key: {} };
-        const dynamodb = new AWS.DynamoDB({apiVersion: '2012-08-10'});
-        var res: any;
-        await dynamodb.getItem(input).promise()
+    When('the settings object is passed to the lambda', async function (){
+        result = await post(mockDynamoDB, eventPayload);
+    });
 
-        res == {pk: 'foo', sk: 'bar'};
-    
-        restore('DynamoDB');
-    }
 
-    @then(/the object is in the DynamoDB/)
-    public checkDynamoDB() {
-        return true
-    }
-}
+    Then('the object is in the DynamoDB', function () {
+        assert.equal(result, "Settings inserted");
+    });

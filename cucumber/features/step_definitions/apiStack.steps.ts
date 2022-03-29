@@ -1,5 +1,5 @@
-import { HttpMethods } from "../../infrastructure/builders/HttpMethods";
-import { ApiStackBuilder } from "../../infrastructure/builders/ApiStackBuilder";
+import { HttpMethods } from "../../../infrastructure/builders/HttpMethods";
+import { ApiStackBuilder } from "../../../infrastructure/builders/ApiStackBuilder";
 import { binding, given, then, when} from 'cucumber-tsflow';
 import { App, Stack } from "aws-cdk-lib";
 import { Template } from "aws-cdk-lib/assertions";
